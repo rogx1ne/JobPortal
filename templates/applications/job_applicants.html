@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Applicants | Job Portal{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h1 class="h4 mb-1">Applicants</h1>
+      <div class="text-muted">{{ job.title }} • {{ job.location }}</div>
+    </div>
+    <a class="btn btn-outline-secondary" href="{% url 'jobs:employer_jobs' %}">Back</a>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Applicant</th>
+            <th>Cover letter</th>
+            <th>Resume</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ app.applicant.username }}</div>
+                <div class="text-muted small">{{ app.applicant.email }}</div>
+              </td>
+              <td style="max-width: 420px;">
+                <div class="small" style="white-space: pre-wrap;">{{ app.cover_letter|default:"-" }}</div>
+              </td>
+              <td>
+                <a href="{{ app.resume.url }}" target="_blank">Download</a>
+              </td>
+              <td>
+                {{ app.get_status_display }}
+              </td>
+              <td class="text-end">
+                <form method="post" action="{% url 'applications:update_status' app.id %}" class="d-flex gap-2 justify-content-end">
+                  {% csrf_token %}
+                  {{ app.status_form.status }}
+                  <button class="btn btn-sm btn-primary" type="submit">Update</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-muted">No applicants yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

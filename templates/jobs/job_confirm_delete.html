@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Job | Job Portal{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <h1 class="h4 mb-3">Delete job</h1>
+      <div class="card card-body">
+        <p>Are you sure you want to delete <strong>{{ job.title }}</strong>?</p>
+        <form method="post" class="d-flex gap-2">
+          {% csrf_token %}
+          <button class="btn btn-danger" type="submit">Delete</button>
+          <a class="btn btn-outline-secondary" href="{% url 'jobs:employer_jobs' %}">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

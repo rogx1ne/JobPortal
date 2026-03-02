@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Employer Dashboard | Job Portal{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h4 mb-0">Employer dashboard</h1>
+    <a class="btn btn-primary" href="{% url 'jobs:create' %}">Post a job</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">My job posts</div>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Applicants</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+            <tr>
+              <td><a href="{% url 'jobs:detail' job.id %}">{{ job.title }}</a></td>
+              <td>{{ job.location }}</td>
+              <td>{{ job.get_job_type_display }}</td>
+              <td>{{ job.applicant_count }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'jobs:edit' job.id %}">Edit</a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'jobs:delete' job.id %}">Delete</a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'applications:job_applicants' job.id %}">Applicants</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-muted">No jobs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

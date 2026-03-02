@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Home | Job Portal{% endblock %}
+
+{% block content %}
+  <div class="p-4 p-md-5 mb-4 rounded text-bg-light border">
+    <div class="col-lg-8 px-0">
+      <h1 class="display-6">Find your next opportunity</h1>
+      <p class="lead my-3">Browse jobs, filter by location and job type, and apply in minutes.</p>
+      <p class="lead mb-0">
+        <a href="{% url 'jobs:list' %}" class="btn btn-primary">Browse jobs</a>
+        {% if not user.is_authenticated %}
+          <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary ms-2">Create account</a>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <h2 class="h5 mb-3">Latest jobs</h2>
+  <div class="row g-3">
+    {% for job in latest_jobs %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="h6 card-title mb-1">{{ job.title }}</h3>
+            <div class="text-muted small">{{ job.location }} • {{ job.get_job_type_display }}</div>
+            <div class="mt-3">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'jobs:detail' job.id %}">View</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info">No jobs posted yet.</div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}
+
