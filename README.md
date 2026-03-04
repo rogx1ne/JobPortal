@@ -1,64 +1,133 @@
-# Job Portal (Django + MySQL + Bootstrap)
+# Career Job Aggregator (Django + MySQL)
 
-Fully working Job Portal web application built with:
-
-- Python + Django (templates)
-- MySQL (no SQLite)
-- Bootstrap (CDN) for basic styling
+A lightweight job discovery engine that aggregates jobs from multiple public APIs in one place.
 
 ## Features
 
-- Role-based authentication: **Admin**, **Employer**, **Job Seeker**
-- Employers: post/edit/delete jobs, view applicants, update application status
-- Job Seekers: browse/search/filter jobs, apply with cover letter + resume, view applied jobs
-- Admin: manage users/jobs/applications via Django admin
+- Search jobs by keyword (+ optional location)
+- Aggregates multiple job sources into one list (Remotive + Arbeitnow; optional Adzuna)
+- Smart relevance ranking (best matches first)
+- Trending jobs on the homepage
+- Popular searches (based on logged searches)
+- Shareable search URLs (copy link)
+- Pagination + sorting + source selection
+- Basic API health logs in Django Admin
+- Filter results by company and category
+- Stores search logs (and optional cached jobs) in MySQL
+- No user accounts required
+- Django Admin for managing logs and cache
 
-## Setup (Local)
+## Tech
 
-### 1) Create MySQL database and user
+- Python (Django)
+- MySQL
+- Django templates (HTML)
+- Bootstrap (CDN)
 
-```sql
-CREATE DATABASE job_portal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'job_portal'@'%' IDENTIFIED BY 'job_portal_password';
-GRANT ALL PRIVILEGES ON job_portal.* TO 'job_portal'@'%';
-FLUSH PRIVILEGES;
+## Project Structure
+
+```
+JobPortal/
+  career_aggregator/          # Django project settings + root URLs
+    settings.py
+    urls.py
+  core/                       # Static pages + homepage
+    views.py                  # Home + About
+    middleware.py             # Request ID middleware
+    request_id.py             # Request ID log filter support
+    templatetags/
+      highlight.py            # Highlight query tokens in templates
+  jobs/                       # Search UI + DB models + admin
+    forms.py                  # Search form + validation
+    views.py                  # Search view (aggregation + filters + pagination)
+    models.py                 # SearchLog, JobCache, ApiFetchLog
+    admin.py                  # Admin configs
+    migrations/               # DB migrations
+    management/commands/      # `cleanup_job_cache` command
+    tests/                    # Unit tests
+  services/                   # Service layer (API integration)
+    job_aggregator.py         # Multi-source fetch, normalize, dedupe, rank, cache
+    job_service.py            # Remotive-only wrapper (compat)
+  templates/                  # Django templates
+    base.html
+    core/                     # home/about
+    jobs/                     # results
+    404.html, 500.html
+  static/                     # Static assets (CSS)
+    css/styles.css
+  manage.py
+  requirements.txt            # Cross-platform deps (PyMySQL)
+  requirements-linux.txt      # Optional linux deps (mysqlclient)
+  .env.example
+  README.md
 ```
 
-### 2) Configure environment
+## Setup (local)
+
+Recommended Python: 3.11+.
+
+### 1) Create and activate a virtualenv
+
+```bash
+python -m venv .venv
+```
+
+Activate:
+
+- Linux/macOS: `source .venv/bin/activate`
+- Windows (PowerShell): `.venv\\Scripts\\Activate.ps1`
+- Windows (cmd): `.venv\\Scripts\\activate.bat`
+
+### 2) Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+`requirements.txt` uses **PyMySQL** (pure Python) for best cross-platform installs.
+
+Optional (Linux): use `mysqlclient` instead (faster, C-based):
+
+```bash
+pip install -r requirements-linux.txt
+```
+
+### 3) Configure environment variables
+
+Copy `.env.example` to `.env` and update values:
 
 ```bash
 cp .env.example .env
 ```
 
-Update `DB_NAME`, `DB_USER`, `DB_PASSWORD` (and `DB_HOST` if needed).
+On Windows, if you don’t have `cp`, create `.env` manually by copying `.env.example`.
 
-### 3) Install dependencies
+### 4) Create MySQL database
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+Example (recommended: create a dedicated DB user instead of using `root`):
+
+```sql
+CREATE DATABASE career_aggregator CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'career_user'@'localhost' IDENTIFIED BY 'change-me';
+CREATE USER 'career_user'@'127.0.0.1' IDENTIFIED BY 'change-me';
+GRANT ALL PRIVILEGES ON career_aggregator.* TO 'career_user'@'localhost';
+GRANT ALL PRIVILEGES ON career_aggregator.* TO 'career_user'@'127.0.0.1';
+FLUSH PRIVILEGES;
 ```
 
-### 4) Run migrations
+If your MySQL server uses an auth plugin PyMySQL can’t use in your environment, either:
+- install `mysqlclient` (`requirements-linux.txt`), or
+- change the MySQL user to a compatible auth plugin for your setup.
+
+### 5) Run migrations + create admin user
 
 ```bash
 python manage.py migrate
+python manage.py createsuperuser
 ```
 
-### 5) Seed sample data (optional)
-
-```bash
-python manage.py seed_data
-```
-
-Seeded credentials:
-
-- Admin: `admin` / `Admin123!Admin123!` (also available at `/admin/`)
-- Employer: `employer1` / `Employer123!Employer123!`
-- Job seeker: `seeker1` / `Seeker123!Seeker123!`
-
-### 6) Run server
+### 6) Start the server
 
 ```bash
 python manage.py runserver
@@ -67,84 +136,43 @@ python manage.py runserver
 Open:
 
 - Home: `http://127.0.0.1:8000/`
-- Jobs: `http://127.0.0.1:8000/jobs/`
+- Search: `http://127.0.0.1:8000/search/`
 - Admin: `http://127.0.0.1:8000/admin/`
 
-## MySQL settings
+## Optional: Enable Adzuna source
 
-Database config lives in `config/settings/base.py` and is loaded from `.env` using `django-environ`.
+1) Create a free Adzuna developer account and get credentials.
+2) Add to `.env`:
+   - `ADZUNA_APP_ID=...`
+   - `ADZUNA_APP_KEY=...`
+   - `ADZUNA_COUNTRY=us` (or another supported country code)
 
-## File uploads
+Then enable the source on the search page via the “Sources” checkboxes.
 
-- Uploaded resumes are stored under `media/` (served automatically in debug mode).
+## Common Issues
 
-Revenue forecasting:
-- `forecast_amount = expected_revenue * probability / 100`
+- `Access denied for user 'root'@'localhost'`:
+  - Don’t use `root` for the app; create a dedicated user (step 4), then update `.env`.
+- Static files not loading in production:
+  - Run `python manage.py collectstatic` and serve `STATIC_ROOT`.
 
-### Tasks
+## Maintenance
 
-- `GET /tasks/`
-- `POST /tasks/` (requires `related_type` + `related_id`)
-- `PATCH /tasks/{id}/`
+- Cleanup old cached rows:
+  - `python manage.py cleanup_job_cache --job-days 30 --api-days 7`
 
-Overdue logic:
-- `Task.is_overdue == due_at < now and status not in (done, canceled)`
+## Tests
 
-### Analytics (optimized annotations)
-
-- `GET /analytics/leads-by-status/`
-- `GET /analytics/revenue-by-month/` (closed won)
-- `GET /analytics/sales-rep-performance/`
-- `GET /analytics/conversion-rate/`
-- `GET /analytics/deal-pipeline/`
-
-## Filtering, Search, Pagination
-
-- Pagination: page-number (`?page=1&page_size=50`)
-- Search: `?search=acme`
-- Ordering: `?ordering=-created_at`
-- Filters (examples):
-  - Leads: `?status=qualified&owner=3`
-  - Deals: `?stage=negotiation&close_date_gte=2026-01-01`
-  - Tasks: `?status=todo&priority=high`
-
-## Error Responses
-
-Validation:
-
-```json
-{
-  "error": {
-    "code": "validation_error",
-    "message": "Invalid input",
-    "details": { "...": ["..."] }
-  }
-}
+```bash
+python manage.py test
 ```
 
-## Seed Data
+## Production notes
 
-`python manage.py seed_data` creates:
-- `admin` (role `admin`)
-- `manager` (role `manager`)
-- `sales1`, `sales2` (role `sales_rep`)
-- Sample leads/customers/deals/tasks
+- Set `DEBUG=False`, set a real `SECRET_KEY`, and configure `ALLOWED_HOSTS`.
+- Run `python manage.py collectstatic` (uses `STATIC_ROOT`).
 
-Default dev passwords:
-- `admin`: `Admin123!Admin123!`
-- `manager`: `Manager123!Manager123!`
-- `sales1`: `Sales123!Sales123!`
-- `sales2`: `Sales123!Sales123!`
+## Notes
 
-Change these in non-development environments.
-
-## Deployment Notes
-
-- Use `DJANGO_ENV=production`
-- Set `DJANGO_DEBUG=false`
-- Provide `DJANGO_ALLOWED_HOSTS`
-- Run with Gunicorn (example in `Dockerfile`)
-
-## Postman Collection
-
-See `postman/CRM.postman_collection.json`.
+- This app links users to the original job posting URL (no in-app applications).
+- Job descriptions from the API are treated as untrusted HTML and are displayed only as plain text excerpts.

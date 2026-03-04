@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}About - Career Aggregator{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="h3 mb-3">About</h1>
+      <p>
+        Career Aggregator is a job discovery platform that pulls job listings from the public Remotive Jobs API.
+        It helps you search by keyword and refine results with filters, then redirects you to the original posting to apply.
+      </p>
+      <ul>
+        <li>No user accounts required</li>
+        <li>Searches are logged in MySQL for analytics</li>
+        <li>Cached jobs are stored for admin visibility</li>
+      </ul>
+      <p class="text-muted mb-0">
+        Disclaimer: Job availability and details are provided by third parties and may change at any time.
+      </p>
+    </div>
+  </div>
+{% endblock %}
+
