@@ -17,3 +17,6 @@ except Exception:  # pragma: no cover
         # Let Django raise the underlying import error later with a clear message.
         pass
 
+from .celery import app as celery_app
+
+__all__ = ("celery_app",)

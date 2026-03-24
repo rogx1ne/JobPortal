@@ -1,2 +1,12 @@
 Django>=5.2,<6.0
 PyMySQL>=1.1.0
+djangorestframework>=3.16.0
+djangorestframework-simplejwt>=5.4.0
+django-cors-headers>=4.4.0
+celery>=5.4.0
+redis>=5.2.0
+django-redis>=6.0.0
+requests>=2.32.0
+beautifulsoup4>=4.12.0
+meilisearch>=0.34.0
+openai>=1.51.0

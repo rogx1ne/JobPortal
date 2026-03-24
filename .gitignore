@@ -1,9 +1,11 @@
 .env
+.env.local
 .venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.tsbuildinfo
 .Python
 build/
 dist/
@@ -16,4 +18,9 @@ htmlcov/
 staticfiles/
 media/
 .DS_Store
+celerybeat-schedule
 
+# Frontend build/deps/local env
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
